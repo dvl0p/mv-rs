@@ -1,9 +1,9 @@
 [workspace]
 authors = ["dvl0p <245560527+dvl0p@users.noreply.github.com>"]
 channels = ["conda-forge"]
-name = "mvrs"
+name = "mv-rs"
 platforms = ["linux-64"]
-version = "0.1.0"
+version = "0.1.1"
 
 [tasks]
 build = { cmd = "cargo build" }

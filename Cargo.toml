@@ -1,6 +1,6 @@
 [package]
-name = "mvrs"
-version = "0.1.0"
-edition = "2026"
+name = "mv-rs"
+version = "0.1.1"
+edition = "2024"
 
 [dependencies]

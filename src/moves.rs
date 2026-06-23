@@ -130,15 +130,28 @@ impl fmt::Display for SlowMoveError {
 }
 
 #[derive(Debug)]
+pub enum ClobberMode {
+    Force,
+    NoClobber,
+    Interactive,
+}
+
+#[derive(Debug)]
 pub struct MoveConfig {
-    verbose: bool,
     src: String,
     dst: String,
+    verbose: bool,
+    clobber: ClobberMode,
 }
 
 impl MoveConfig {
-    pub fn new(verbose: bool, src: String, dst: String) -> Self {
-        Self { verbose, src, dst }
+    pub fn new(verbose: bool, clobber: ClobberMode, src: String, dst: String) -> Self {
+        Self {
+            verbose,
+            clobber,
+            src,
+            dst,
+        }
     }
 }
 

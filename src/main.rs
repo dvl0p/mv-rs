@@ -52,19 +52,19 @@ fn execute(config: moves::MoveConfig) -> Result<(), moves::MoveError> {
 
 fn parse_args(args: Vec<String>) -> Result<moves::MoveConfig, ArgsError> {
     let mut verbose = false;
+    let mut clobber = moves::ClobberMode::Force;
     let mut src = String::new();
     let mut dst = String::new();
     for arg in args.iter().skip(1) {
-        if arg == "-v" || arg == "--verbose" {
-            verbose = true;
-        } else if arg.starts_with('-') {
-            return Err(ArgsError::UnknownFlag(arg.clone()));
-        } else if src.is_empty() {
-            src = arg.clone();
-        } else if dst.is_empty() {
-            dst = arg.clone();
-        } else {
-            return Err(ArgsError::UnknownArg(arg.clone()));
+        match arg.as_str() {
+            "-v" | "--verbose" => verbose = true,
+            "-f" | "--force" => clobber = moves::ClobberMode::Force,
+            "-n" | "--no-clobber" => clobber = moves::ClobberMode::NoClobber,
+            "-i" | "--interactive" => clobber = moves::ClobberMode::Interactive,
+            flag if flag.starts_with('-') => return Err(ArgsError::UnknownFlag(flag.to_string())),
+            _ if src.is_empty() => src = arg.clone(),
+            _ if dst.is_empty() => dst = arg.clone(),
+            _ => return Err(ArgsError::UnknownArg(arg.clone())),
         }
     }
     if src.is_empty() {
@@ -73,5 +73,5 @@ fn parse_args(args: Vec<String>) -> Result<moves::MoveConfig, ArgsError> {
     if dst.is_empty() {
         return Err(ArgsError::MissingDestinationPath);
     }
-    Ok(moves::MoveConfig::new(verbose, src, dst))
+    Ok(moves::MoveConfig::new(verbose, clobber, src, dst))
 }

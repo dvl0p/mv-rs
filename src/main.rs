@@ -1,46 +1,56 @@
 use std::env;
+use std::fmt;
 use std::process::exit;
 
+mod moves;
+
 #[derive(Debug)]
-enum MoveError {
-    NoSRC,
-    NoDST,
-    UnknownFlag(String),
+enum ArgsError {
+    MissingSourcePath,
+    MissingDestinationPath,
     UnknownArg(String),
+    UnknownFlag(String),
 }
 
-#[derive(Debug)]
-struct MoveConfig {
-    verbose: bool,
-    src: String,
-    dst: String,
-}
-
-fn main() {
-    match parse_args(env::args().collect()) {
-        Ok(cfg) => {
-            println!("{:#?}", cfg);
-        }
-        Err(MoveError::NoSRC) => {
-            eprintln!("error: missing source file path");
-            exit(1);
-        }
-        Err(MoveError::NoDST) => {
-            eprintln!("error: missing destination path");
-            exit(1);
-        }
-        Err(MoveError::UnknownFlag(flag)) => {
-            eprintln!("error: unknown option: '{flag}'");
-            exit(1);
-        }
-        Err(MoveError::UnknownArg(arg)) => {
-            eprintln!("error: incorrect positional argument: '{arg}'");
-            exit(1);
+impl fmt::Display for ArgsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ArgsError::MissingSourcePath => {
+                write!(f, "missing move source path")
+            }
+            ArgsError::MissingDestinationPath => {
+                write!(f, "missing move destination path")
+            }
+            ArgsError::UnknownArg(arg) => {
+                write!(f, "unknown argument \"{arg}\"")
+            }
+            ArgsError::UnknownFlag(flag) => {
+                write!(f, "unknown flag \"{flag}\"")
+            }
         }
     }
 }
 
-fn parse_args(args: Vec<String>) -> Result<MoveConfig, MoveError> {
+fn main() {
+    let config = match parse_args(env::args().collect()) {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            eprintln!("error: {error}");
+            exit(1)
+        }
+    };
+    if let Err(error) = execute(config) {
+        eprintln!("error: {error}");
+        exit(1);
+    };
+}
+
+fn execute(config: moves::MoveConfig) -> Result<(), moves::MoveError> {
+    println!("{:#?}", config);
+    Ok(())
+}
+
+fn parse_args(args: Vec<String>) -> Result<moves::MoveConfig, ArgsError> {
     let mut verbose = false;
     let mut src = String::new();
     let mut dst = String::new();
@@ -48,20 +58,20 @@ fn parse_args(args: Vec<String>) -> Result<MoveConfig, MoveError> {
         if arg == "-v" || arg == "--verbose" {
             verbose = true;
         } else if arg.starts_with('-') {
-            return Err(MoveError::UnknownFlag(arg.clone()));
+            return Err(ArgsError::UnknownFlag(arg.clone()));
         } else if src.is_empty() {
             src = arg.clone();
         } else if dst.is_empty() {
             dst = arg.clone();
         } else {
-            return Err(MoveError::UnknownArg(arg.clone()));
+            return Err(ArgsError::UnknownArg(arg.clone()));
         }
     }
     if src.is_empty() {
-        return Err(MoveError::NoSRC);
+        return Err(ArgsError::MissingSourcePath);
     }
     if dst.is_empty() {
-        return Err(MoveError::NoDST);
+        return Err(ArgsError::MissingDestinationPath);
     }
-    Ok(MoveConfig { verbose, src, dst })
+    Ok(moves::MoveConfig::new(verbose, src, dst))
 }
